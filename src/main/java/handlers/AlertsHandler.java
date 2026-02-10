@@ -1,0 +1,57 @@
+package handlers;
+
+import utils.LogsManager;
+import org.openqa.selenium.WebDriver;
+import utils.WaitHandler;
+
+public class AlertsHandler {
+    private final WebDriver driver;
+    private final WaitHandler waitHandler;
+
+    public AlertsHandler(WebDriver driver){
+        this.driver = driver;
+        this.waitHandler = new WaitHandler(driver);
+    }
+
+    public void acceptAlert(int generalWait){
+        try {
+            waitHandler.waitForAlert(generalWait);
+            driver.switchTo().alert().accept();
+            LogsManager.info("Alert Accepted");
+        } catch (Exception e) {
+            LogsManager.error("Alert not found. " + e.getMessage());
+        }
+    }
+
+    public void dismissAlert(int generalWait){
+        try {
+            waitHandler.waitForAlert(generalWait);
+            driver.switchTo().alert().dismiss();
+            LogsManager.info("Alert Dismissed");
+        } catch (Exception e) {
+            LogsManager.error("Alert not found. " + e.getMessage());
+        }
+    }
+
+    public void sendKeysToAlert(String keys, int generalWait) {
+        try {
+            waitHandler.waitForAlert(generalWait);
+            driver.switchTo().alert().sendKeys(keys);
+            LogsManager.info("Send Keys To Alert.. " + keys);
+        } catch (Exception e) {
+            LogsManager.error("Alert not found. " + e.getMessage());
+        }
+    }
+
+    public String getAlertText(int generalWait) {
+        try {
+            waitHandler.waitForAlert(generalWait);
+            String text = driver.switchTo().alert().getText();
+            LogsManager.info("Alert Text.. " + text);
+            return (text != null && !text.isEmpty()) ? text : null;
+        } catch (Exception e) {
+            LogsManager.error("Alert has no text. " + e.getMessage());
+            return null;
+        }
+    }
+}
