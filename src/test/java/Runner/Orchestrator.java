@@ -14,20 +14,23 @@ import utils.ScreenshotService;
 
 import java.nio.file.Path;
 
-public class TestRunner {
+public class Orchestrator extends BaseOrchestrator{
     public static int generalWait;
-    // You can move this to properties later
-    private static final int HTML_MAX_CHARS = 20000;
+    private static int HTML_MAX_CHARS ;
+    private static  WebDriverFactory driver;
+
+
+    public Orchestrator(WebDriverFactory driver, int HTML_MAX_CHARS){
+        this.driver = driver;
+        this.HTML_MAX_CHARS = HTML_MAX_CHARS;
+    }
+
+
+
 
     public static void main(String[] args) throws Exception {
 
-        // Load properties first
-        PropertyReader.loadProperties();
 
-        // 1) Start driver
-        WebDriverFactory driver = new WebDriverFactory();
-
-        // 2) Create executor wrapper
         actionExecute executor = new actionExecute(driver);
 
         // 3) Planner run folder
@@ -58,7 +61,7 @@ public class TestRunner {
             LogsManager.info("Requesting next step from LLM. stepId=" + stepCounter);
 
             // 5) Ask the LLM for ONE step (JSON)
-            String llmResponse = planner.getNextStep(String.valueOf(stepCounter), stateJson);
+            String llmResponse = planner.getNextStep(stepCounter, stateJson);
 
             // 6) Parse the returned step JSON
             String[] step = JsonMapper.parseStep(llmResponse);
@@ -69,7 +72,7 @@ public class TestRunner {
             String action = step[3];
             String selector = step[4];
             String value = step[5];
-            int generalWait = Integer.parseInt(step[6]);     // currently not injected into WaitHandler, keep for later
+            int generalWait = Integer.parseInt(step[6]);
             int screenshotWait = Integer.parseInt(step[7]);
             boolean screenshot = Boolean.parseBoolean(step[8]);
             stopTesting = Boolean.parseBoolean(step[9]);
@@ -145,6 +148,7 @@ public class TestRunner {
             currentHtmlSlim = HtmlSlimmer.slim(safeGetHtml(driver), HTML_MAX_CHARS);
 
             stateJson = JsonMapper.buildPlannerUpdate(
+                    scenario,
                     stepId,
                     stepDetails,
                     success,

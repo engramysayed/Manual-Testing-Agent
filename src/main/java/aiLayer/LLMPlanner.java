@@ -1,4 +1,5 @@
 package aiLayer;
+
 import utils.FilesManager;
 
 import java.nio.file.Path;
@@ -11,60 +12,43 @@ public class LLMPlanner {
     public LLMPlanner(Path runFolder) {
         this.runFolder = runFolder;
         this.llmClient = new LLMClient();
-        FilesManager.createDirectory(String.valueOf(runFolder.resolve("aiLayer")));
+        FilesManager.createDirectory(runFolder.resolve("planner").toString());
     }
 
-    public String getNextStep(String stepId, String stateJson) throws Exception {
-        // Build prompt
-        String prompt = buildPrompt(stateJson);
 
-        // Save prompt
-        Path promptFile = runFolder.resolve("aiLayer")
-                .resolve(String.format("step_%s_prompt.txt", stepId));
+    public String getNextStep(int stepId, String plannerMessageJson) throws Exception {
+
+        String prompt = buildPrompt(plannerMessageJson);
+
+        Path promptFile = runFolder.resolve("planner").resolve("step_" + stepId + "_prompt.txt");
         FilesManager.writeFile(promptFile, prompt);
 
-        // Call LLM
-        String response = llmClient.callLLM(prompt);
+        String responseText = llmClient.call(prompt, 1200);
 
-        // Save response
-        Path responseFile = runFolder.resolve("aiLayer")
-                .resolve(String.format("step_%s_response.json", stepId));
-        FilesManager.writeFile(responseFile, response);
+        Path responseFile = runFolder.resolve("planner").resolve("step_" + stepId + "_response.json");
+        FilesManager.writeFile(responseFile, responseText);
 
-        return response;
+        return responseText;
     }
 
-    private String buildPrompt(String stateJson) {
+    private String buildPrompt(String plannerMessageJson) {
         return """
-            You are a test automation planner. Given the current browser state, output the NEXT SINGLE step as strict JSON.
-            
-            RULES:
-            - Output ONLY valid JSON, no explanation
-            - ONE step per response
-            - Use the exact schema provided
-            
-            CURRENT STATE:
-            %s
-            
-            OUTPUT FORMAT (strict JSON):
-            {
-              "step_id": <number>,
-              "action": "click|type|select|wait|navigate|done",
-              "target": {
-                "ref": {
-                  "type": "css|xpath|id",
-                  "value": "<selector>"
-                }
-              },
-              "input": "<text to type (for type action)>",
-              "wait": { "after_ms": 1000 },
-              "assertions": [],
-              "notes": "optional explanation"
-            }
-            
-            If the test is complete, return: {"action": "done"}
-            
-            YOUR RESPONSE (JSON only):
-            """.formatted(stateJson);
+You are a test automation planner.
+
+You will receive a JSON message (PlannerStart or PlannerUpdate) that includes:
+- the scenario
+- the current state (url + slim html)
+- and the REQUIRED output schema.
+
+Your job:
+- Output ONLY ONE JSON object (no markdown, no explanations)
+- It MUST match the required output schema in the message
+- Produce the NEXT step only
+
+PLANNER_MESSAGE_JSON:
+%s
+
+YOUR OUTPUT (JSON only):
+""".formatted(plannerMessageJson);
     }
 }

@@ -80,9 +80,16 @@ public class JsonMapper {
     }
 
      //Build LOOP message to the LLM after each step (PlannerUpdate).
-    public static String buildPlannerUpdate(
-            int lastStepId, String lastStepDetails, boolean lastStepSuccess, String lastStepMessage,
-            String currentUrl, String currentHtmlSlim, String currentScreenshotRef)
+     public static String buildPlannerUpdate(
+             String scenario,
+             int lastStepId,
+             String lastStepDetails,
+             boolean lastStepSuccess,
+             String lastStepMessage,
+             String currentUrl,
+             String currentHtmlSlim,
+             String currentScreenshotRef
+     )
     {
         JSONObject output = new JSONObject();
         output.put("type", "PlannerUpdate");
@@ -102,6 +109,7 @@ public class JsonMapper {
         state.put("currentHtmlSlim", currentHtmlSlim);
         state.put("currentScreenshotRef",  currentScreenshotRef);
         output.put("currentState", state);
+        output.put("scenario", scenario);
 
         return output.toString();
     }
