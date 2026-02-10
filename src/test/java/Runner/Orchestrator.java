@@ -1,49 +1,41 @@
 package Runner;
 
 import aiLayer.LLMPlanner;
-import drivers.WebDriverFactory;
-import executionLayer.actionExecute;
 import executionLayer.SelectorParser;
+import executionLayer.actionExecute;
 import parsingLayer.JsonMapper;
-
 import org.openqa.selenium.By;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.Test;
 import utils.HtmlSlimmer;
 import utils.LogsManager;
-import utils.PropertyReader;
 import utils.ScreenshotService;
 
-import java.nio.file.Path;
+public class Orchestrator extends BaseOrchestrator {
 
-public class Orchestrator extends BaseOrchestrator{
-    public static int generalWait;
-    private static int HTML_MAX_CHARS ;
-    private static  WebDriverFactory driver;
-
-
-    public Orchestrator(WebDriverFactory driver, int HTML_MAX_CHARS){
-        this.driver = driver;
-        this.HTML_MAX_CHARS = HTML_MAX_CHARS;
+    private int intOrDefault(String s, int fallback) {
+        try {
+            if (s == null || s.isBlank()) return fallback;
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return fallback;
+        }
     }
 
+    @Test
+    public void runScenario() throws Exception {
 
-
-
-    public static void main(String[] args) throws Exception {
-
-
+        // 1) Dependencies
         actionExecute executor = new actionExecute(driver);
-
-        // 3) Planner run folder
-        Path runFolder = Path.of(System.getProperty("user.dir"), "test-output", "run_1");
         LLMPlanner planner = new LLMPlanner(runFolder);
 
-        // 4) Build initial state (start message)
-        String currentUrl = safeGetUrl(driver);
-        String currentHtmlSlim = HtmlSlimmer.slim(safeGetHtml(driver), HTML_MAX_CHARS);
-
+        // 2) Scenario (later you can make this DataProvider)
         String scenario =
-                "Write your scenario here. Example: " +
-                        "Test Google search: type 'OpenAI' in search box and click search, then stop.";
+                "Test Google search: type 'OpenAI' in search box and click search, then stop.";
+
+        // 3) Initial state
+        String currentUrl = safeGetUrl();
+        String currentHtmlSlim = HtmlSlimmer.slim(safeGetHtml(), HTML_MAX_CHARS);
 
         String stateJson = JsonMapper.buildPlannerStart(
                 scenario,
@@ -60,20 +52,22 @@ public class Orchestrator extends BaseOrchestrator{
             LogsManager.info("==========================================");
             LogsManager.info("Requesting next step from LLM. stepId=" + stepCounter);
 
-            // 5) Ask the LLM for ONE step (JSON)
+            // Ask LLM
             String llmResponse = planner.getNextStep(stepCounter, stateJson);
 
-            // 6) Parse the returned step JSON
+            // Parse step
             String[] step = JsonMapper.parseStep(llmResponse);
 
-            int stepId = Integer.parseInt(step[0]);
+            int stepId = intOrDefault(step[0], stepCounter);
             String stepDetails = step[1];
             String actionType = step[2];
             String action = step[3];
             String selector = step[4];
             String value = step[5];
-            int generalWait = Integer.parseInt(step[6]);
-            int screenshotWait = Integer.parseInt(step[7]);
+
+            int generalWait = intOrDefault(step[6], DEFAULT_WAIT);
+            int screenshotWait = intOrDefault(step[7], DEFAULT_SCREENSHOT_WAIT);
+
             boolean screenshot = Boolean.parseBoolean(step[8]);
             stopTesting = Boolean.parseBoolean(step[9]);
 
@@ -89,28 +83,20 @@ public class Orchestrator extends BaseOrchestrator{
             String message = "OK";
 
             try {
-                // 7) Convert selector -> By (only needed for element actions / some frame actions)
+                // selector -> By
                 By locator = null;
                 if (selector != null && !selector.isBlank()) {
                     locator = SelectorParser.toBy(selector);
                 }
 
-                // 8) Execute the action (your existing router)
-                // browserAction:
-                //   - url must come in "value" if action is navigate (so we pass it as url param)
-                // frameAction:
-                //   - frame target comes in "value"
-                // elementAction:
-                //   - uses locator + value
+                // browser navigate uses value as url
                 String urlParam = "";
                 String tabParam = "";
 
                 if ("browserAction".equalsIgnoreCase(actionType) && "navigate".equalsIgnoreCase(action)) {
-                    urlParam = value; // value carries the url
+                    urlParam = value;
                 }
 
-                // IMPORTANT: for frameAction your code uses frameAction(type, value)
-                // So value should contain frame id/name/index etc.
                 String result = executor.checkAction(
                         actionType,
                         action,
@@ -128,13 +114,10 @@ public class Orchestrator extends BaseOrchestrator{
                     message = "Action executed: " + result;
                 }
 
-                // 9) Wait after action before screenshot if needed
-                if (screenshot && screenshotWait > 0) {
-                    Thread.sleep(screenshotWait * 1000L);
-                    if (screenshot ==true && screenshotWait > 0) {
-                        Thread.sleep(screenshotWait * 1000L);
-                        ScreenshotService.capture(driver.get(), runFolder, stepId);
-                    }
+                // Screenshot (no double wait block)
+                if (screenshot) {
+                    if (screenshotWait > 0) Thread.sleep(screenshotWait * 1000L);
+                    ScreenshotService.capture(driver.get(), runFolder, stepId);
                 }
 
             } catch (Exception e) {
@@ -143,9 +126,9 @@ public class Orchestrator extends BaseOrchestrator{
                 LogsManager.error("Execution error: " + message);
             }
 
-            // 10) Capture new state for PlannerUpdate
-            currentUrl = safeGetUrl(driver);
-            currentHtmlSlim = HtmlSlimmer.slim(safeGetHtml(driver), HTML_MAX_CHARS);
+            // Build update state
+            currentUrl = safeGetUrl();
+            currentHtmlSlim = HtmlSlimmer.slim(safeGetHtml(), HTML_MAX_CHARS);
 
             stateJson = JsonMapper.buildPlannerUpdate(
                     scenario,
@@ -160,13 +143,16 @@ public class Orchestrator extends BaseOrchestrator{
 
             stepCounter++;
         }
-
-        // Quit driver
-        driver.quit();
-        LogsManager.info("Runner finished.");
     }
 
-    private static String safeGetUrl(WebDriverFactory driver) {
+    @AfterSuite(alwaysRun = true)
+    public void teardown() {
+        try {
+            if (driver != null) driver.quit();
+        } catch (Exception ignored) {}
+    }
+
+    private String safeGetUrl() {
         try {
             String url = driver.get().getCurrentUrl();
             return url == null ? "" : url;
@@ -175,7 +161,7 @@ public class Orchestrator extends BaseOrchestrator{
         }
     }
 
-    private static String safeGetHtml(WebDriverFactory driver) {
+    private String safeGetHtml() {
         try {
             String html = driver.get().getPageSource();
             return html == null ? "" : html;
