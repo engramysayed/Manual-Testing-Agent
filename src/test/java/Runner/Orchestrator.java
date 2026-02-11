@@ -3,27 +3,29 @@ package Runner;
 import aiLayer.LLMPlanner;
 import executionLayer.SelectorParser;
 import executionLayer.actionExecute;
+import helpers.OrchestratorHelper;
 import parsingLayer.JsonMapper;
 import org.openqa.selenium.By;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
 import utils.HtmlSlimmer;
 import utils.LogsManager;
+import utils.PropertyReader;
 import utils.ScreenshotService;
 
 public class Orchestrator extends BaseOrchestrator {
 
-    private int intOrDefault(String s, int fallback) {
-        try {
-            if (s == null || s.isBlank()) return fallback;
-            return Integer.parseInt(s);
-        } catch (Exception e) {
-            return fallback;
-        }
-    }
 
     @Test
     public void runScenario() throws Exception {
+
+            new OrchestratorHelper(driver);
+
+
+
+
+
+
 
         // 1) Dependencies
         actionExecute executor = new actionExecute(driver);
@@ -58,18 +60,21 @@ public class Orchestrator extends BaseOrchestrator {
             // Parse step
             String[] step = JsonMapper.parseStep(llmResponse);
 
-            int stepId = intOrDefault(step[0], stepCounter);
+            //store vars
+            int stepId = Integer.parseInt(step[0]);
             String stepDetails = step[1];
             String actionType = step[2];
             String action = step[3];
             String selector = step[4];
             String value = step[5];
-
-            int generalWait = intOrDefault(step[6], DEFAULT_WAIT);
-            int screenshotWait = intOrDefault(step[7], DEFAULT_SCREENSHOT_WAIT);
-
+            int generalWait = validateTime(step[6], DEFAULT_WAIT);
+            int screenshotWait = validateTime(step[7], DEFAULT_SCREENSHOT_WAIT);
             boolean screenshot = Boolean.parseBoolean(step[8]);
             stopTesting = Boolean.parseBoolean(step[9]);
+
+            //store wait Time into properties
+            storeVars(generalWait,screenshotWait);
+
 
             LogsManager.info("LLM Step: " + stepId + " | " + stepDetails);
             LogsManager.info("actionType=" + actionType + ", action=" + action + ", selector=" + selector);
@@ -103,8 +108,7 @@ public class Orchestrator extends BaseOrchestrator {
                         urlParam,
                         tabParam,
                         locator,
-                        value,
-                        generalWait
+                        value
                 );
 
                 if (result == null || "false".equalsIgnoreCase(result)) {
@@ -145,28 +149,30 @@ public class Orchestrator extends BaseOrchestrator {
         }
     }
 
-    @AfterSuite(alwaysRun = true)
-    public void teardown() {
+    @AfterSuite
+    public void closeDriver() {
         try {
-            if (driver != null) driver.quit();
+            driver.quit();
         } catch (Exception ignored) {}
     }
 
-    private String safeGetUrl() {
+    private int validateTime(String givenTime, int defaultTime) {
         try {
-            String url = driver.get().getCurrentUrl();
-            return url == null ? "" : url;
+            if (givenTime == null || givenTime.isBlank())
+            {
+                return defaultTime;
+            }
+            else {
+                return Integer.parseInt(givenTime);
+            }
         } catch (Exception e) {
-            return "";
+            return defaultTime;
         }
     }
 
-    private String safeGetHtml() {
-        try {
-            String html = driver.get().getPageSource();
-            return html == null ? "" : html;
-        } catch (Exception e) {
-            return "";
-        }
+    private void storeVars(int time,int screenWaitTime){
+        PropertyReader.setProperty("globalWait", String.valueOf(time));
+        PropertyReader.setProperty("screenShotWait", String.valueOf(screenWaitTime));
     }
+
 }

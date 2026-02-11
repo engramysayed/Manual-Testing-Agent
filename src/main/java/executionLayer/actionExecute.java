@@ -2,6 +2,7 @@ package executionLayer;
 
 import drivers.WebDriverFactory;
 import org.openqa.selenium.By;
+import utils.PropertyReader;
 
 import static java.lang.Integer.parseInt;
 
@@ -13,30 +14,29 @@ public class actionExecute {
     }
 
     public String checkAction(String option, String type,
-                              String url, String tab, By locator, String value,
-                              int generalWait) {
+                              String url, String tab, By locator, String value)
+    {
         return switch (option) {
             case "browserAction" -> browserAction(type, url, tab);
 
-            case "elementAction" -> elementAction(type, locator, value, generalWait);
+            case "elementAction" -> elementAction(type, locator, value);
 
-            case "frameAction" -> frameAction(type, value, locator, generalWait);
-
+            case "frameAction" -> frameAction(type, value, locator);
 
             default -> null;
         };
     }
 
-    public String elementAction(String type, By locator, String value, int generalWait) {
+    public String elementAction(String type, By locator, String value) {
         return switch (type) {
-            case "click" -> driver.element().click(locator, generalWait);
-            case "type" -> driver.element().type(locator, value, generalWait);
-            case "clear" -> driver.element().clear(locator, generalWait);
-            case "select" -> driver.element().selectFromDD(locator, value, generalWait);
-            case "getText" -> driver.element().getText(locator, generalWait);
-            case "getAttr" -> driver.element().getAttributeValue(locator, value, generalWait);
+            case "click" -> driver.element().click(locator);
+            case "type" -> driver.element().type(locator, value);
+            case "clear" -> driver.element().clear(locator);
+            case "select" -> driver.element().selectFromDD(locator, value);
+            case "getText" -> driver.element().getText(locator);
+            case "getAttr" -> driver.element().getAttributeValue(locator, value);
             case "scroll" -> driver.element().scrollToElement(locator); // no wait needed
-            case "upload" -> driver.element().uploadFile(locator, value, generalWait);
+            case "upload" -> driver.element().uploadFile(locator, value);
             default -> null;
         };
     }
@@ -55,14 +55,14 @@ public class actionExecute {
         };
     }
 
-    public String frameAction(String frameType, String frameValue, By locator, int generalWait) {
+    public String frameAction(String frameType, String frameValue, By locator){
         return switch (frameType) {
             case "switchFrameById" ->
-                    driver.frames().switchToFrameByNameOrId(frameValue, generalWait);
+                    driver.frames().switchToFrameByNameOrId(frameValue);
             case "switchFrameByIndex" ->
-                    driver.frames().switchToFrameByIndex(parseInt(frameValue), generalWait);
+                    driver.frames().switchToFrameByIndex(parseInt(frameValue));
             case "switchFrameByName" ->
-                     driver.frames().switchToFrameByElement(locator, generalWait);
+                     driver.frames().switchToFrameByElement(locator);
             case "switchToParent" ->
                     driver.frames().switchToDefaultContent();
             default -> null;

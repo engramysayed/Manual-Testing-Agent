@@ -14,9 +14,9 @@ public class FramesHandler {
         this.waitHandler = new WaitHandler(driver);
     }
 
-    public String switchToFrameByIndex(int index, int generalWait) {
+    public String switchToFrameByIndex(int index) {
         try{
-            waitHandler.waitFrameByIndex(index, generalWait);
+            waitHandler.waitFrameByIndex(index);
             driver.switchTo().frame(index);
             LogsManager.info("Frame switched to by index: " + index);
             return "true";
@@ -26,9 +26,9 @@ public class FramesHandler {
         }
     }
 
-    public String switchToFrameByNameOrId(String nameOrId, int generalWait) {
+    public String switchToFrameByNameOrId(String nameOrId) {
         try{
-            waitHandler.waitFrameByNameOrId(nameOrId, generalWait);
+            waitHandler.waitFrameByNameOrId(nameOrId);
             driver.switchTo().frame(nameOrId);
             LogsManager.info("Frame switched to by name or id: " + nameOrId);
             return "true";
@@ -38,9 +38,9 @@ public class FramesHandler {
         }
     }
 
-    public String switchToFrameByElement(By locator, int generalWait){
+    public String switchToFrameByElement(By locator){
         try{
-            waitHandler.waitFrameByElement(locator, generalWait);
+            waitHandler.waitFrameByElement(locator);
             driver.switchTo().frame(driver.findElement(locator));
             LogsManager.info("Frame switched to by element: " + locator);
             return "true";

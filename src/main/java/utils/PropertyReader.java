@@ -37,4 +37,12 @@ public class PropertyReader {
             return null;
         }
      }
+
+     public static void setProperty(String key, String value) {
+        try {
+            System.setProperty(key, value);
+        }catch (Exception e) {
+            LogsManager.error("Error setting property: " + key + " - " + e.getMessage());
+        }
+     }
 }

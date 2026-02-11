@@ -36,10 +36,10 @@ public class ElementsHandler {
         return driver.findElement(locator);
     }
 
-    public String selectFromDD(By locator, String option, int generalWait) {
+    public String selectFromDD(By locator, String option) {
         try {
             scrollToElement(locator);
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             new Select(findElement(locator)).selectByValue(option);
             LogsManager.info("Option selected successfully from dropdown: " + locator + " option: " + option);
             return "true";
@@ -49,10 +49,10 @@ public class ElementsHandler {
         }
     }
 
-    public String uploadFile(By locator, String path, int generalWait){
+    public String uploadFile(By locator, String path){
         try {
             String filePath = System.getProperty("user.dir") + File.separator + path;
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             findElement(locator).sendKeys(filePath);
             LogsManager.info("File uploaded successfully: " + path);
             return "true";
@@ -62,10 +62,10 @@ public class ElementsHandler {
         }
     }
 
-    public String click(By locator, int generalWait) {
+    public String click(By locator) {
         try {
             scrollToElement(locator);
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             findElement(locator).click();
             return "true";
         } catch (Exception e) {
@@ -74,9 +74,9 @@ public class ElementsHandler {
         }
     }
 
-    public String type(By locator, String text, int generalWait) {
+    public String type(By locator, String text) {
         try {
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             WebElement el = findElement(locator);
             el.clear();
             el.sendKeys(text);
@@ -88,9 +88,9 @@ public class ElementsHandler {
         }
     }
 
-    public String getText(By locator, int generalWait) {
+    public String getText(By locator) {
         try {
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             String text = findElement(locator).getText();
             return (text != null && !text.isEmpty()) ? text : null;
         } catch (Exception e) {
@@ -99,9 +99,9 @@ public class ElementsHandler {
         }
     }
 
-    public String clear(By locator, int generalWait) {
+    public String clear(By locator) {
         try {
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             findElement(locator).clear();
             return "true";
         } catch (Exception e) {
@@ -110,9 +110,9 @@ public class ElementsHandler {
         }
     }
 
-    public String getAttributeValue(By locator, String attributeName, int generalWait) {
+    public String getAttributeValue(By locator, String attributeName) {
         try {
-            waitHandler.waitForElementToBeVisible(locator, generalWait);
+            waitHandler.waitForElementToBeVisible(locator);
             String val = findElement(locator).getAttribute(attributeName);
             return (val != null && !val.isEmpty()) ? val : "";
         } catch (Exception e) {

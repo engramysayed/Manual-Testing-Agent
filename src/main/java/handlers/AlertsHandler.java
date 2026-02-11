@@ -13,9 +13,9 @@ public class AlertsHandler {
         this.waitHandler = new WaitHandler(driver);
     }
 
-    public void acceptAlert(int generalWait){
+    public void acceptAlert(){
         try {
-            waitHandler.waitForAlert(generalWait);
+            waitHandler.waitForAlert();
             driver.switchTo().alert().accept();
             LogsManager.info("Alert Accepted");
         } catch (Exception e) {
@@ -23,9 +23,9 @@ public class AlertsHandler {
         }
     }
 
-    public void dismissAlert(int generalWait){
+    public void dismissAlert(){
         try {
-            waitHandler.waitForAlert(generalWait);
+            waitHandler.waitForAlert();
             driver.switchTo().alert().dismiss();
             LogsManager.info("Alert Dismissed");
         } catch (Exception e) {
@@ -33,9 +33,9 @@ public class AlertsHandler {
         }
     }
 
-    public void sendKeysToAlert(String keys, int generalWait) {
+    public void sendKeysToAlert(String keys) {
         try {
-            waitHandler.waitForAlert(generalWait);
+            waitHandler.waitForAlert();
             driver.switchTo().alert().sendKeys(keys);
             LogsManager.info("Send Keys To Alert.. " + keys);
         } catch (Exception e) {
@@ -43,9 +43,9 @@ public class AlertsHandler {
         }
     }
 
-    public String getAlertText(int generalWait) {
+    public String getAlertText( ) {
         try {
-            waitHandler.waitForAlert(generalWait);
+            waitHandler.waitForAlert();
             String text = driver.switchTo().alert().getText();
             LogsManager.info("Alert Text.. " + text);
             return (text != null && !text.isEmpty()) ? text : null;

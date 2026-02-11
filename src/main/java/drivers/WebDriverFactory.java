@@ -7,8 +7,6 @@ import handlers.FramesHandler;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ThreadGuard;
 import utils.PropertyReader;
-import validations.Validation;
-import validations.Verification;
 
 public class WebDriverFactory {
 
@@ -47,13 +45,7 @@ public class WebDriverFactory {
         return new AlertsHandler(get());
     }
 
-    public Validation validation(){
-        return new Validation(get());
-    }
 
-    public Verification verification(){
-        return new Verification(get());
-    }
 
 
 }
